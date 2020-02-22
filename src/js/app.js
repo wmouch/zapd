@@ -12,10 +12,11 @@ function DeleteChildren(id) {
 
 function Click() {
     console.log("clicked");
-    AppSocket.send(0x00);
+    const req = {"request_type": "INVOICE"};
+    AppSocket.send(JSON.stringify(req));
 }
 
-function GenQr(bolt11) {
+function DisplayQr(bolt11) {
     DeleteChildren("qr-canvas");
     DeleteChildren("qr-text");
 
@@ -37,12 +38,18 @@ function GenQr(bolt11) {
     t.appendChild(pre);
 }
 
+function DisplayPaid(msats) {
+    var p = document.getElementById("paid-invoices");
+    var t = document.createTextNode("OM NOM: " + msats);
+    p.appendChild(t);
+}
+
 
 function CreateButtons() {
     var buttons = document.getElementById("buttons");
 
     var b = document.createElement("button");
-    var t = document.createTextNode("Request Something");
+    var t = document.createTextNode("Can I Pay You?");
     b.appendChild(t);
     b.onclick = function() {
         console.log("click");
@@ -54,7 +61,13 @@ function CreateButtons() {
 function WsMessageReceived(event) {
     console.log("received: " + event.data);
     const data = JSON.parse(event.data);
-    GenQr(data.bolt11);
+    if (data.notification_type == "INVOICE") {
+        DisplayQr(data.bolt11);
+    } else if (data.notification_type == "INVOICE_PAID") {
+        DisplayPaid(data.msats);
+    } else {
+        console.log("unknown notification: " + data.notification_type);
+    }
 }
 
 function ConnectUponLoad() {

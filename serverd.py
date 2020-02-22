@@ -43,22 +43,51 @@ DAEMON = Daemon()
 
 ###############################################################################
 
+
 class AppClient(WebSocketServerProtocol):
+    def __init__(self):
+        super().__init__()
+        self.uuid = uuid.uuid4()
+        self.server.clients[self.uuid] = self
+
+    def notify(self, info):
+        msg = json.dumps(info).encode("utf8")
+        self.sendMessage(msg)
+
+    def request_new_invoice(self):
+        i = DAEMON.invoice()
+        i['notification_type'] = "INVOICE"
+        self.notify(i)
+
+    def notify_invoice_paid(self, label, msats):
+        i = {'notification_type': "INVOICE_PAID",
+             'label':             label,
+             'msats':             msats}
+        self.notify(i)
+
+    ###########################################################################
+
     def onConnect(self, request):
         print("Client connecting: {0}".format(request.peer))
 
     def onOpen(self):
         print("WebSocket client connection open.")
-        self.server.clients.append(self)
 
     def onMessage(self, payload, isBinary):
-        print("got message? %s" % payload)
-        i = DAEMON.invoice()
-        msg = json.dumps(i).encode("utf8")
-        self.sendMessage(msg)
+        if isBinary:
+            print("got binary request")
+            return
+        payload = json.loads(payload.decode("utf8"))
+        request_type = payload['request_type']
+        if request_type == "INVOICE":
+            self.request_new_invoice()
+        else:
+            print("unknown request %s" % request_type)
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: {0}".format(reason))
+        if self.uuid in self.server.clients:
+            del self.server.clients[self.uuid]
 
 ###############################################################################
 
@@ -70,15 +99,14 @@ class AppServer(WebSocketServerFactory):
                                 autoPingTimeout=5)
         self.protocol = AppClient
         self.protocol.server = self
-        self.clients = []
+        self.clients = {}
         print("listening on websocket %s" % ws_url)
         reactor.listenTCP(port, self)
         self.app = app
 
-    def echo_to_clients(self, message):
-        print("echoing to clients: %s" % message)
-        for c in self.clients:
-            c.sendMessage(message.encode("utf8"))
+    def echo_invoice_payment(self, label, msat):
+        for c in self.clients.values():
+            c.notify_invoice_paid(label, msat)
 
 ###############################################################################
 
@@ -108,7 +136,7 @@ class App(object):
     def invoice_payment_message(self, message):
         d = json.loads(message.decode('utf8'))['invoice_payment']
         print("got %s" % json.dumps(d, indent=1))
-        self.ws_server.echo_to_clients(d)
+        self.ws_server.echo_invoice_payment(d['label'], d['msat'])
 
     def zmq_message(self, message, tag):
         if tag == INVOICE_PAYMENT_TAG:
