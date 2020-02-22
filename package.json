@@ -1,0 +1,37 @@
+{
+  "name": "zapd",
+  "version": "1.0.0",
+  "description": "I don't know what to call this yet.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wmouch/zapd.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wmouch/zapd/issues"
+  },
+  "homepage": "https://github.com/wmouch/zapd#readme",
+  "dependencies": {
+    "gulp-clean": "^0.4.0",
+    "qrious": "^4.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.4",
+    "@babel/preset-env": "^7.8.4",
+    "browserify": "^16.5.0",
+    "gulp": "^4.0.2",
+    "gulp-babel": "^8.0.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-imagemin": "^7.1.0",
+    "gulp-sourcemaps": "^2.6.5",
+    "gulp-uglify": "^3.0.2",
+    "gulplog": "^1.0.0",
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^2.0.0"
+  }
+}
